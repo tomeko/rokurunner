@@ -92,16 +92,16 @@
             </div>
             
             <!-- roku devs: action buttons -->
-            <div class="row">
-                <div class="d-flex ml-3">
-                    <div v-if="rokudevs_edited" style="display: inline-block; margin: 0px 10px 0px 10px;">
+            <div class="row ml-3">
+                <div class="d-flex">
+                    <div v-if="rokudevs_edited" class="d-flex mx-2">
                         <b-button variant="danger" @click="save_rokudevs">Save Changes</button>
                     </div>
-                    <div style="display: inline-block; margin: 0px 10px 0px 10px;">
+                    <div class="d-flex mx-2">
                         <b-button :disabled="searching" variant="outline-primary" @click="find_rokus">Auto
                             Search...</button>
                     </div>
-                    <div v-if="searching" style="display: inline-block; margin: 0px 10px 0px 0px;">
+                    <div v-if="searching" class="d-flex mx-2">
                         <b-spinner style="margin: 0px 10px 0px 10px; vertical-align: middle;"></b-spinner>
                         Searching...
                     </div>
@@ -112,7 +112,7 @@
             </div>
             
             <!-- roku devs: autosearch results -->
-            <div v-if="search_started" class="row mt-3 ml-2">
+            <div v-if="search_started" class="row mt-3 ml-3">
                     <h3 style="font-size: 18px;">Found Rokus</h3>
                     <b-table hover responsive borderless :table-variant="primary" :striped="true" :items="found_rokus" :fields="fields_found_rokus">
                         <template v-slot:cell(rdev_ip)="row"></template>
@@ -152,17 +152,17 @@
             <!-- roku runners: action buttons -->
             <div class="row mt-3 ml-3">
                 <div class="d-flex">
-                    <div v-if="runners_edited" class="d-flex">
+                    <div v-if="runners_edited" class="d-flex mx-2">
                         <b-button variant="danger" @click="save_runners">Save Changes</button>
                     </div>
-                    <div class="d-flex">
+                    <div class="d-flex mx-2">
                         <b-button variant="outline-primary" @click="new_runner">Add...</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="border rounded p-3 mt-5">
+        <div class="border rounded p-3 my-5">
             <!-- roku runners: title and runner list -->
             <div class="row justify-content-center ">
                 <h3>RokuRunner Endpoints</h3>
@@ -199,10 +199,10 @@
             <!-- roku runners: action buttons -->
             <div class="row mt-3 ml-3">
                 <div class="d-flex">
-                    <div v-if="eps_edited" class="d-flex">
+                    <div v-if="eps_edited" class="d-flex mx-2">
                         <b-button variant="danger" @click="save_eps">Save Changes</button>
                     </div>
-                    <div class="d-flex">
+                    <div class="d-flex mx-2">
                         <b-button variant="outline-primary" @click="new_ep">Add...</button>
                     </div>
                 </div>
@@ -331,7 +331,7 @@
                     if (value)
                     {
                         this.runners.splice(this.runners.indexOf(runner), 1);
-                        this.runner = true;
+                        this.runners_edited = true;
                     }
                         
                 });
@@ -427,9 +427,7 @@
                 { 
                     if (data.status == "OK")
                     {
-                        this.runners_edited = false;
-                        for (var i=0; i<this.runners.length; i++)
-                            this.runners[i].saved = true;
+                        location.reload();
                     }
                         
                     else console.log(data);
