@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-vue/2.21.2/bootstrap-vue.min.css" integrity="sha512-YnP4Ql71idaMB+/ZG38+1adSSQotdqvixQ+dQg8x/IFA4heIj6i0BC31W5T5QUdK1Uuwa01YdqdcT42q+RldAg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <script src='https://cdn.jsdelivr.net/npm/vue/dist/vue.js'></script>
+    <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-vue/2.21.2/bootstrap-vue.min.js" integrity="sha512-Z0dNfC81uEXC2iTTXtE0rM18I3ATkwn1m8Lxe0onw/uPEEkCmVZd+H8GTeYGkAZv50yvoSR5N3hoy/Do2hNSkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>RokuRunner - Home</title>
+    <style>
+        body {
+            overscroll-behavior-y: contain;
+        }
+        .action-col {
+            width: 200px !important;
+        }
+        .action-ico
+        {
+            display: inline; color: #696969; 
+            font-size: 22px; 
+            margin: 0px 5px;
+        }
+        .logo
+        {
+            font-family: 'Press Start 2P', cursive; 
+            font-size: 2em; 
+            text-decoration: none;
+            color: #fff;
+            margin: 0px 10px;
+        }
+        .logo:hover
+        {
+            color: #fff;
+        }
+        .toast-copied
+        {
+            text-align: center;
+        }
+
+    </style>
+</head>
+
+
+
+<body>
+
+<div id="app">
+    <b-navbar type="dark" variant="dark">
+        <a class="logo" href="#" @click="gohome">RokuRunner</a>         
+    </b-navbar>
+    <div class="container pt-3">
+        
+        <!-- roku devs -->
+        <div class="border rounded p-3">
+            <!-- roku devs: title and dev list -->
+            <div class="row justify-content-center">
+                    <h3>Roku Devices</h3>
+                    <b-table hover responsive borderless :table-variant="primary" :striped="true" :items="devices" :fields="fields_devices">
+                        <template v-slot:cell(name)="row">
+                            <div v-if="!row.item.editing">
+                                [[ row.item.name ]]
+                            </div>
+                            <b-form-input v-model="row.item.name" v-if="row.item.editing" style="text-align: center;"
+                                v-on:change="rokudevs_edited = true;" />
+                        </template>
+                        <template v-slot:cell(ip)="row">
+                            <div v-if="!row.item.editing">
+                                [[ row.item.ip ]]
+                            </div>
+                            <b-form-input v-model="row.item.ip" v-if="row.item.editing" style="text-align: center;" v-on:change="rokudevs_edited = true;" />
+
+                        </template>
+                        <template v-slot:cell(edit_rdev)="row">
+                            <div class="text-center">
+                                <a href="javascript:void(0);" v-if="!row.item.editing" class="action-ico" @click="row.item.editing = true;"><i class="las la-pencil-alt"></i></a>
+                                <a href="javascript:void(0);" v-if="row.item.editing" class="action-ico"  @click="row.item.editing = false; "><i class="las la-check"></i></a>
+                                <a href="javascript:void(0);" class="action-ico" @click="delete_roku(row.item)"><i class="las la-trash-alt"></i></a>
+                            </div>
+                        </template>
+
+
+                    </b-table>
+
+            </div>
+            
+            <!-- roku devs: action buttons -->
+            <div class="row">
+                <div class="d-flex ml-3">
+                    <div v-if="rokudevs_edited" style="display: inline-block; margin: 0px 10px 0px 10px;">
+                        <b-button variant="danger" @click="save_rokudevs">Save Changes</button>
+                    </div>
+                    <div style="display: inline-block; margin: 0px 10px 0px 10px;">
+                        <b-button :disabled="searching" variant="outline-primary" @click="find_rokus">Auto
+                            Search...</button>
+                    </div>
+                    <div v-if="searching" style="display: inline-block; margin: 0px 10px 0px 0px;">
+                        <b-spinner style="margin: 0px 10px 0px 10px; vertical-align: middle;"></b-spinner>
+                        Searching...
+                    </div>
+                    <div style="display: inline-block;">
+                        <b-button variant="outline-primary" @click="new_roku">Manual Add...</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- roku devs: autosearch results -->
+            <div v-if="search_started" class="row mt-3 ml-2">
+                    <h3 style="font-size: 18px;">Found Rokus</h3>
+                    <b-table hover responsive borderless :table-variant="primary" :striped="true" :items="found_rokus" :fields="fields_found_rokus">
+                        <template v-slot:cell(rdev_ip)="row"></template>
+                        <template v-slot:cell(rdev_uuid)="row"></template>
+                        <template v-slot:cell(add_action)="row">
+                            <a href="javascript:void(0)" v-if="row.item.canadd" class="action-ico" @click="add_roku(row.item)"><i class="las la-plus-circle"></i></a>
+                        </template>
+                    </b-table>
+
+            </div>
+        </div>
+
+        <!-- roku runners -->
+        <div class="border rounded p-3 mt-5">
+            <!-- roku runners: title and runner list -->
+            <div class="row justify-content-center ">
+                        <h3>Runners</h3>
+                        <b-table hover responsive borderless :table-variant="primary" :striped="true" :items="runners" :fields="fields_runners">
+                            <template v-slot:cell(name)="row">
+                                <div v-if="!row.item.editing">
+                                    [[ row.item.name ]]
+                                </div>
+                                <b-form-input v-if="row.item.editing" v-model="row.item.name"  style="text-align: center;" v-on:change="runners_edited = true;" />    
+                            </template>
+                            <template v-slot:cell(edit_runner)="row">
+                                <div class="text-center">
+                                    <a href="javascript:void(0);" v-if="!row.item.editing" class="action-ico" @click="row.item.editing = true; "><i class="las la-pencil-alt"></i></a>
+                                    <a href="javascript:void(0);" v-if="row.item.editing" class="action-ico" @click="row.item.editing = false;  "><i class="las la-check"></i></a>
+                                    <a href="javascript:void(0);" class="action-ico" @click="delete_runner(row.item)"><i class="las la-trash-alt"></i></a>
+                                    <a href="javascript:void(0);" v-if="row.item.saved" class="action-ico" @click="edit_runner(row.item)"><i class="las la-edit"></i></a>
+                                </div>
+                            </template>
+
+                        </b-table>
+
+            </div>
+            <!-- roku runners: action buttons -->
+            <div class="row mt-3 ml-3">
+                <div class="d-flex">
+                    <div v-if="runners_edited" class="d-flex">
+                        <b-button variant="danger" @click="save_runners">Save Changes</button>
+                    </div>
+                    <div class="d-flex">
+                        <b-button variant="outline-primary" @click="new_runner">Add...</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border rounded p-3 mt-5">
+            <!-- roku runners: title and runner list -->
+            <div class="row justify-content-center ">
+                <h3>RokuRunner Endpoints</h3>
+                <b-table hover responsive borderless :table-variant="primary" :striped="true" :items="endpoints" :fields="fields_endpoints">
+                    <template v-slot:cell(name)="row">
+                        <div v-if="!row.item.editing">[[ row.item.name ]]</div>
+                        <b-form-input v-if="row.item.editing" v-model="row.item.name"  style="text-align: center;" v-on:change="eps_edited = true;" />  
+                    </template>
+                    <template v-slot:cell(dev_id)="row">
+                        <div v-if="!row.item.editing">[[ row.item.dev_name ]]</div>
+                        <b-form-select v-if="row.item.editing" :options="devices.map(({name})=>name)" v-on:changed="eps_edited = true;" v-model="row.item.dev_name"/>
+                    </template>
+                    <template v-slot:cell(runner_id)="row">
+                        <div v-if="!row.item.editing">[[ row.item.runner_name ]]</div>
+                        <b-form-select v-if="row.item.editing" :options="runners.map(({name})=>name)" v-on:changed="eps_edited = true;" v-model="row.item.runner_name"/>
+                    </template>
+                    <template v-slot:cell(ep)="row">
+                        <div class="d-flex">
+                            [[ make_epurl(row.item) ]]
+                            <a href="javascript:void(0);" v-if="!row.item.editing" class="action-ico pl-3" @click="copyepurl(row.item)"><i class="las la-copy"></i></a>
+                        </div>
+                    </template>
+                    <template v-slot:cell(edit_eps)="row">
+                        <div class="text-center">
+                            <a href="javascript:void(0);" v-if="!row.item.editing" class="action-ico" @click="row.item.editing = true; "><i class="las la-pencil-alt"></i></a>
+                            <a href="javascript:void(0);" v-if="row.item.editing" class="action-ico" @click="update_ep(row.item) "><i class="las la-check"></i></a>
+                            <a href="javascript:void(0);" class="action-ico" @click="delete_ep(row.item)"><i class="las la-trash-alt"></i></a>
+                            <a href="javascript:void(0);" class="action-ico" @click="exec_ep(row.item)"><i class="las la-play"></i></a>
+                        </div>
+                    </template>
+                    
+                </b-table>
+            </div>
+            <!-- roku runners: action buttons -->
+            <div class="row mt-3 ml-3">
+                <div class="d-flex">
+                    <div v-if="eps_edited" class="d-flex">
+                        <b-button variant="danger" @click="save_eps">Save Changes</button>
+                    </div>
+                    <div class="d-flex">
+                        <b-button variant="outline-primary" @click="new_ep">Add...</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function parsedev(jsondat) 
+    {
+        ret = []
+        for (var i = 0; i < jsondat.length; i++) {
+            ret.push({ name: jsondat[i].name, id: jsondat[i].id, ip: jsondat[i].ip, editing: false});
+        }
+        return ret;
+    }
+
+    function parsecmds(jsondat) 
+    {
+        ret = []
+        for (var i = 0; i < jsondat.length; i++) {
+            ret.push({ name: jsondat[i].name, id: jsondat[i].id, editing: false, saved: true});
+        }
+        return ret;
+    }
+
+    function cbcopy(dat)
+    {
+        var tmp = document.createElement("textarea");
+        tmp.value = dat;
+        tmp.style.position="fixed";  //avoid scrolling to bottom
+        document.body.appendChild(tmp);
+        tmp.focus();
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+    }
+
+    var vm = new Vue({
+
+        el: '#app',
+        data: {
+
+            fields_devices: [{ key: "name", label: "DeviceName", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "ip", label: "IPAddress", tdClass: 'text-center align-middle', thClass: 'text-center' }, {key: "edit_rdev", thClass: 'd-none'}],
+            fields_runners: [{ key: "name", label: "Runner Name", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "edit_runner", thClass: 'd-none'}],
+            fields_found_rokus: [ {key: "ip", label: "IP"}, {key: "uuid", label: "UUID"}, {key: "add_action", thClass: 'd-none'}],
+            fields_endpoints: [{ key: "name", label: "Name", tdClass: 'text-center align-middle'}, {key: "dev_id", label: "Device"}, {key: "runner_id", label: "Runner"}, {key: "ep", label:"Endpoint"}, { key: "edit_eps", thClass: 'd-none'}],
+            devices: [],
+            runners: [],
+            endpoints: [],
+            searching: false,
+            search_started: false,
+            rokudevs_edited: false,
+            runners_edited: false,
+            eps_edited: false,
+            manual_reload: false,
+            found_rokus: [],
+            
+        },
+        delimiters: ['[[', ']]'],
+        methods: {
+            insertRow(index) {
+                this.commands.splice(index, 0, { cmd: 'ButtonPress', arg: 'Left' });
+            },
+
+            deleteRow(index) {
+                this.commands.splice(index, 1);
+            },
+            find_rokus()
+            {
+                this.searching = true;
+                fetch(`${window.location.origin}/roku_list`).then(response => response.json()).then(data => {
+                    console.log(data);
+                    this.found_rokus = [];
+                    this.search_started = true;
+                    for (var i in data)
+                    {
+                        console.log(data[i].usn);
+                        var uuid = data[i].usn.match('uuid:roku:ecp:(.*)')[1];
+                        var ip = data[i].ip.match('http[s]?:\/\/(.*):8060[\/]?')[1];
+                        var found = {"ip" : ip, "uuid" : uuid};
+                        found.canadd = !(this.devices.some(d => d.ip === ip));
+                        this.found_rokus.push(found);
+                        console.log(`found: ${found.ip} canadd: ${found.canadd}`);
+                        this.searching = false;
+                    }
+                    
+                });
+                
+            },
+            add_roku(rdev)
+            {
+                if (this.devices.some(d => d["ip"] == rdev.ip))
+                {
+                    this.$bvModal.msgBoxOk(`Roku with IP: ${rdev.ip} already exists`);
+                } else
+                {
+                    this.rokudevs_edited = true;
+                    this.devices.push({ip: String(rdev.ip), name: `newRoku${this.devices.length + 1}`, editing: true});
+                    this.found_rokus.splice(this.found_rokus.indexOf(rdev), 1);
+                }
+                
+
+            },
+            new_roku()
+            {
+                this.rokudevs_edited = true;
+                this.devices.push({ip: "0.0.0.0", name: `newRoku${this.devices.length + 1}`, editing: true});
+            },
+            delete_roku(rdev)
+            {
+                this.$bvModal.msgBoxConfirm(`Delete this Roku? IP: ${rdev.ip}`).then(value => {
+                    if (value)
+                    {
+                        this.devices.splice(this.devices.indexOf(rdev), 1);
+                        this.rokudevs_edited = true;
+                    }
+                        
+                });
+            },
+            delete_runner(runner)
+            {
+                this.$bvModal.msgBoxConfirm(`Delete this runner? Name: ${runner.name}`).then(value => {
+                    if (value)
+                    {
+                        this.runners.splice(this.runners.indexOf(runner), 1);
+                        this.runner = true;
+                    }
+                        
+                });
+            },
+            delete_ep(ep)
+            {
+                this.$bvModal.msgBoxConfirm(`Delete this Endpoint? Name: ${ep.name}`).then(value => {
+                    if (value)
+                    {
+                        this.endpoints.splice(this.endpoints.indexOf(ep), 1);
+                        this.eps_edited = true;
+                    }
+                        
+                });
+            },
+            parse_ep(eps) 
+            {
+                ret = []
+                for (var i = 0; i < eps.length; i++) {
+                    var dev_loc = this.devices.find(d => d.id == eps[i].dev_id);
+                    var runner_loc = this.runners.find(c => c.id == eps[i].runner_id);
+                    ret.push({ name: eps[i].name, dev_id: eps[i].dev_id, dev_name: dev_loc.name, runner_id: eps[i].runner_id, runner_name: runner_loc.name, editing: false});
+                }
+                return ret;
+            },
+            make_epurl(ep)
+            {
+                var dev = this.devices.find(d => d.id == ep.dev_id);
+                var runner = this.runners.find(c => c.id == ep.runner_id)
+                if (dev === undefined || runner === undefined)
+                {
+                    return '';
+                }
+                else
+                {
+                    return `${window.location.origin}/exec?dev_id=${dev.id}&runner_id=${runner.id}`;
+                }
+            },
+            edit_runner(runner)
+            {
+                window.location.href = `${window.location.origin}/runner_edit?runner_id=${runner.id}`;
+            },
+            save_rokudevs()
+            {
+                // check for duplicates
+                var unique_names = [...new Set(this.devices.map(item => item.name))];
+                if (unique_names.length != this.devices.length)
+                {
+                    this.$bvModal.msgBoxOk('Roku names must be unique');
+                    return;
+                }
+                var unique_ips = [...new Set(this.devices.map(item => item.ip))];
+                if (unique_ips.length != this.devices.length)
+                {
+                    this.$bvModal.msgBoxOk('Roku IPs must be unique');
+                    return;
+                }
+                this.manual_reload = true;
+                const url = `${window.location.origin}/save_devs`;
+                const options = 
+                {
+                    method: 'POST',
+                    headers: {'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'},
+                    body: JSON.stringify(this.devices)
+                };
+
+                fetch(url, options).then(response => response.json()).then(data=>
+                { 
+                    if (data.status == "OK")
+                        this.rokudevs_edited = false;
+                    else console.log(data.status);
+                });
+            },
+            save_runners()
+            {
+                var unique_names = [...new Set(this.runners.map(item => item.name))];
+                if (unique_names.length != this.runners.length)
+                {
+                    this.$bvModal.msgBoxOk('Runner names must be unique');
+                    return;
+                }
+
+                this.manual_reload = true;
+                const url = `${window.location.origin}/save_runners`;
+                const options = 
+                {
+                    method: 'POST',
+                    headers: {'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'},
+                    body: JSON.stringify(this.runners)
+                };
+
+                fetch(url, options).then(response => response.json()).then(data=>
+                { 
+                    if (data.status == "OK")
+                    {
+                        this.runners_edited = false;
+                        for (var i=0; i<this.runners.length; i++)
+                            this.runners[i].saved = true;
+                    }
+                        
+                    else console.log(data);
+                });
+
+            },
+            save_eps()
+            {
+                var unique_names = [...new Set(this.endpoints.map(item => item.name))];
+                if (unique_names.length != this.endpoints.length)
+                {
+                    this.$bvModal.msgBoxOk('Endpoint names must be unique');
+                    return;
+                }
+                this.manual_reload = true;
+                const url = `${window.location.origin}/save_eps`;
+                const options = 
+                {
+                    method: 'POST',
+                    headers: {'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'},
+                    body: JSON.stringify(this.endpoints)
+                };
+
+                fetch(url, options).then(response => response.json()).then(data=>
+                { 
+                    if (data.status == "OK")
+                        this.eps_edited = false;
+                    else console.log(data);
+                });
+
+            },
+            update_ep(ep)
+            {
+                // map the name to id for dev and runner (because the backend model only needs ids not names)
+                var ep_idx = this.endpoints.indexOf(ep);
+                var dev = this.devices.find(d => d.name == ep.dev_name);
+                var runner = this.runners.find(c => c.name == ep.runner_name);
+                this.endpoints[ep_idx].dev_id = dev.id;
+                this.endpoints[ep_idx].runner_id = runner.id;
+                this.endpoints[ep_idx].editing = false;
+                this.eps_edited = true;
+
+            },
+            new_ep()
+            {
+                if (this.runners.length == 0 || this.devices.length == 0)
+                {
+                    this.$bvModal.msgBoxOk('Need at least 1 device and runner to add');
+                    return;
+                }
+                this.endpoints.push({name: `runner${this.endpoints.length + 1}`, editing: true});
+
+            },
+            new_runner()
+            {
+                this.runners.push({name: `runner${this.runners.length + 1}`, editing: true, saved: false, id: -1});
+                this.runners_edited = true;
+            },
+            gohome()
+            {
+                window.location.href = window.location.origin;
+            },
+            copyepurl(ep)
+            {
+                cbcopy(this.make_epurl(ep));
+                this.$bvToast.toast(`${ep.name} copied`, {
+                    autoHideDelay: 1000,
+                    toaster: 'b-toaster-bottom-center',
+                    noCloseButton: true,
+                    variant: "warning",
+                    bodyClass: 'toast-copied'
+                });
+            },
+            exec_ep(ep)
+            {
+                window.open(this.make_epurl(ep), '_blank');
+            }
+
+        },
+        created: function () {
+
+            this.devices = parsedev({{ devs| tojson }});
+            this.runners = parsecmds({{ cmds| tojson }});
+            this.endpoints = this.parse_ep({{ eps| tojson }});
+            console.log(this.devices);
+            console.log(this.runners);
+            window.onbeforeunload = () => (this.rokudevs_edited && !this.manual_reload ? true : null);
+        }
+    });
+</script>
+
+</body>
+
+</html>

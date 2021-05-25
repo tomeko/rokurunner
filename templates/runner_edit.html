@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-vue/2.21.2/bootstrap-vue.min.css" integrity="sha512-YnP4Ql71idaMB+/ZG38+1adSSQotdqvixQ+dQg8x/IFA4heIj6i0BC31W5T5QUdK1Uuwa01YdqdcT42q+RldAg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <script src='https://cdn.jsdelivr.net/npm/vue/dist/vue.js'></script>
+    <script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-vue/2.21.2/bootstrap-vue.min.js" integrity="sha512-Z0dNfC81uEXC2iTTXtE0rM18I3ATkwn1m8Lxe0onw/uPEEkCmVZd+H8GTeYGkAZv50yvoSR5N3hoy/Do2hNSkw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/http-vue-loader@1.4.2/src/httpVueLoader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.13.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-sortable@0.1.3/vue-sortable.min.js"></script>
+    <title>RokuRunner - Edit Runner</title>
+    <style>
+        body {
+            overscroll-behavior-y: contain;
+        }
+
+        .action-col {
+            width: 200px !important;
+        }
+        .action-ico
+        {
+            display: inline; color: #696969; 
+            font-size: 22px; 
+            margin: 0px 5px;
+        }
+        .logo
+        {
+            font-family: 'Press Start 2P', cursive; 
+            font-size: 2em; 
+            text-decoration: none;
+            color: #fff;
+            margin: 0px 10px;
+        }
+        .logo:hover
+        {
+            color: #fff;
+        }
+    </style>
+</head>
+
+
+
+<body>
+
+    <div id="app">
+        <b-navbar type="dark" variant="dark">
+            <a class="logo" href="#" @click="gohome">RokuRunner</a>         
+        </b-navbar>
+
+        <div class="container pt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <h2>{{ cmds_name }}</h2>
+                    <b-table hover responsive borderless primary-key="id" :striped="true" :table-variant="primary" :items="commands" :fields="fields" v-sortable="sortableOptions" >
+                        <template v-slot:cell(cmd)="row">
+                            <b-form-select :options="cmd_types" v-model="row.item.cmd" v-on:change="update_arg(row.item)"/>
+                        </template>
+                        <template v-slot:cell(arg)="row" >
+                            <div v-if="row.item.cmd === 'Delay'" class="d-flex justify-content-center" >
+                                <b-form-input v-model="row.item.arg" type="number" v-on:change="edited = true;" style="width: 120px;"></b-form-input>
+                                <div style="margin-top: 5px; margin-left: 10px;">ms</div>
+                            </div>
+                            <div v-if="row.item.cmd === 'ButtonPress'">
+                                <b-form-select :options="btnpress_types" v-model="row.item.arg" v-on:change="edited = true;" v-if="row.item.cmd === 'ButtonPress'" />
+                            </div>
+                            <div v-if="row.item.cmd === 'HTTPRequest' || row.item.cmd === 'SendCharacter'">
+                                <b-form-input v-model="row.item.arg" v-on:change="edited = true;" style="height: 27px; margin-left: auto; margin-right: auto;"/>
+                            </div>
+                        </template>
+                        <template #cell(action)="data" >
+                            <div class="text-center">
+                                <a href="#/" class="action-ico" @click="insertRow(data.index)"><i class="las la-plus-circle"></i></a>
+                                <a href="#/" class="action-ico" @click="deleteRow(data.index)"><i class="las la-trash-alt"></i></a>
+                            </div>
+
+                        </template>
+                    </b-table>
+
+                    <div class="row">
+                        <div class="col-sm-6 mt-5">
+                            <div v-if="this.commands.length == 0" style="display: inline-block; margin: 0px 10px 0px 10px;">
+                                <b-button variant="outline-primary" @click="appendRow" style="display: inline-block;">Add Command</b-button>
+                            </div>
+                            <div v-if="edited" style="display: inline-block;">
+                                <b-button variant="danger" @click="save" style="display: inline-block;">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    
+            </div>
+        </div>
+
+
+
+    </div>
+
+    <script>
+        
+        function swap(json)
+        {
+            var ret = {};
+            for(var key in json)
+                ret[json[key]] = key;
+            return ret;
+        }
+
+        // data encode/decode helpers
+        const command_t = { 0: "ButtonPress", 1: "Delay", 2: "HTTPRequest", 3: "SendCharacter" };
+        const commands_len = Object.keys(command_t).length;
+        const command_t_inv = swap(command_t);
+        const btnpress_str = ["Home", "Reverse", "Forward", "Play", "Select", "Left", "Right", "Down", "Up", "Back", "InstantReplay", "Info", "Backspace", "Search", "Enter", "VolumeDown", "VolumeMute", "VolumeUp", "PowerOff", "InputTuner", "InputHDMI1", "InputHDMI2", "InputHDMI3", "InputHDMI4", "InputAV1"];
+        const btnpress_t = {};
+        btnpress_str.forEach((el, idx) => btnpress_t[idx] = el);    // build indexed hashtable for btnpress_str, ex: {0: "Left", 1: "Up", ...etc}
+
+        // unique key needed for drag sorting, otherwise reactiveness scrambles everything
+        // see https://stackoverflow.com/a/48484974
+        var cmd_idx = 0;
+
+        function parsedat(jsondat)
+        {
+            ret = []
+            for (var i in jsondat)
+            {
+                var cmdparsed = command_t[jsondat[i].cmd];
+                var argparsed;
+
+                if (jsondat[i].cmd == 0)
+                    argparsed = btnpress_str[jsondat[i].arg];
+                else
+                    argparsed = jsondat[i].arg;
+                
+                ret.push({cmd: cmdparsed, arg: argparsed, id: cmd_idx++});
+                    
+            }
+            return ret;
+        }
+
+        function encodedat(dat)
+        {
+            ret = [];
+
+            for (var i in dat)
+            {
+                var cmdenc = parseInt(command_t_inv[dat[i].cmd]);
+                var argenc;
+                if (cmdenc == 0)
+                    argenc = parseInt(btnpress_str.indexOf(dat[i].arg));
+                else
+                    argenc = dat[i].arg;
+                ret.push({ cmd: cmdenc, arg: argenc});
+            }
+            return ret;
+        }
+
+        const createSortable = (el, options, vnode) => {
+
+            return Sortable.create(el, {
+                ...options
+                
+            });
+        };
+
+        const sortable = {
+            name: 'sortable',
+            bind(el, binding, vnode) {
+                const table = el;
+                table._sortable = createSortable(table.querySelector("tbody"), binding.value, vnode);
+            }
+        };
+
+        var vm = new Vue({
+
+            el: '#app',
+            components: {
+                'Sortable': httpVueLoader('vue-sortable')
+            },
+            directives: { sortable },
+            data: {
+                fields: [{ key: "cmd", label: "CommandType", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "arg", label: "Argument", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "action", thClass: 'd-none action-col', tdClass: 'align-middle action-col' }],
+                commands: [],
+                commands_id: '',
+                sortableOptions: {},
+                edited: false,
+                cmd_types: [],
+                btnpress_types: []
+            },
+            delimiters: ['[[', ']]'],
+            methods: {
+                insertRow(index) {
+                    if (index == this.commands.length - 1)
+                    {
+                        this.appendRow();
+                    } else
+                    {
+                        cmd_idx++;
+                        this.commands.splice(index, 0, { cmd: '', arg: '', id: cmd_idx });
+                        this.edited = true;
+                    }
+                },
+
+                deleteRow(index) {
+                    this.commands.splice(index, 1);
+                    this.edited = true;
+                },
+
+                reorder ({oldIndex, newIndex}) {
+                    const movedItem = this.commands.splice(oldIndex, 1)[0];
+                    this.commands.splice(newIndex, 0, movedItem);
+                    this.edited = true;
+                },
+
+                appendRow()
+                {
+                    cmd_idx++;
+                    this.commands.push({ cmd: 'ButtonPress', arg: '', id: cmd_idx});
+                    this.edited = true;
+                },
+                update_arg(cmdset)
+                {
+                    this.edited = true;
+                    cmdset.arg = '';
+                },
+                save()
+                {
+                    if (this.commands.some(c => c.cmd === '') || this.commands.some(c => c.arg === ''))
+                    {
+                        this.$bvModal.msgBoxOk('Some fields missing, please fix first');
+                        return;
+                    }
+                    var cmds = encodedat(this.commands);
+                    var cmds_id = { "cmds_id": this.commands_id};
+                    var ret = [cmds_id, cmds];
+                    const url = `${window.location.origin}/runner_edit`;
+                    const options = 
+                    {
+                        method: 'POST',
+                        headers: {'Accept': 'application/json', 'Content-Type': 'application/json;charset=UTF-8'},
+                        body: JSON.stringify(ret)
+                    };
+
+                    fetch(url, options).then(response => response.json()).then(data=>
+                    { 
+                        if (data["status"] == "OK")
+                            this.edited = false;
+                    });
+                },
+                gohome()
+                {
+                    window.location.href = `${window.location.origin}/`;
+                }
+            },
+            template: '',
+            created: function ()
+            {
+                
+                this.commands = parsedat(JSON.parse({{ cmds_dat | tojson }}));
+                this.commands_id = parseInt({{ cmds_id}});
+                this.sortableOptions = { onEnd: this.reorder };
+                btnpress_str.forEach((b) => {
+                    this.btnpress_types.push({value: String(b), text: String(b)});
+                });
+                for (var key in command_t)
+                    this.cmd_types.push({value: String(command_t[key]), text: String(command_t[key]) });
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+FLASK_APP = "rokurunner.py"
+
+[packages]
+Flask = "*"
+Flask-SQLAlchemy = "*"
+Flask-Migrate = "*"
+Flask-Executor = "*"
+requests = "*"
+roku = "*"
+
+[scripts]
+rokurunner = "python rokurunner.py"
