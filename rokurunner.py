@@ -18,6 +18,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///rokurunner.db"
 app.config['EXECUTOR_TYPE'] = 'thread'
 app.config['EXECUTOR_MAX_WORKERS'] = 5
 
+app.config['TESTING'] = True
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 executor = Executor(app)
@@ -131,7 +133,6 @@ def save_eps():
         eps_resp = json.loads(request.data)
         RunnerEndpoint.query.delete()
         for ep in eps_resp:
-            print(ep)
             new_ep = RunnerEndpoint()
             new_ep.name = ep["name"]
             new_ep.dev_id = ep["dev_id"]
@@ -165,7 +166,6 @@ def save_runners():
         
         runner_resp = json.loads(request.data)
         runners_all = Runner.query.all()
-        print(runner_resp)
 
         # first check for any deletions
         for r_loc in runners_all:
@@ -210,7 +210,6 @@ def home():
 @app.route("/roku_list")
 def roku_list():
     rokus = discover()
-    print(f"rokus: {len(rokus)}")
     ret = []
     for r in rokus:
         ret.append({ "ip" : r.location, "usn" : r.usn})
@@ -227,7 +226,6 @@ def runner_edit():
             id_dict = dat[0]
             cmds_id = id_dict["cmds_id"]
             cmds_arr = dat[1]
-            print(cmds_arr)
             if (len(cmds_arr) == 0):
                 resp["status"] = "ErrNoRunnersSent"
                 return json.dumps(resp)
@@ -238,7 +236,6 @@ def runner_edit():
             
             runner.cmds.clear()
             for c in cmds_arr:
-                print(f'adding: {c["cmd"]} : {c["arg"]}')
                 newc = Command(c["cmd"], c["arg"])
                 runner.cmds.append(newc)
 
@@ -249,19 +246,17 @@ def runner_edit():
             if runner is None:
                 return "runner not found"
             else:
-                print(f"runner found id:{runner.id}")
                 runner_dat = []
                 for cmd in runner.cmds:
                     dict = {"cmd": int(cmd.type), "arg": cmd.arg}
                     runner_dat.append(dict)
                 return render_template("runner_edit.html", cmds_id=runner.id, cmds_name=runner.name, cmds_dat=json.dumps(runner_dat))
     except Exception as e:
-        print(f"error{str(e)}")
         return str(e)
 
 if __name__ == "__main__":
     os.system("flask db init")
     os.system("flask db migrate")
     os.system("flask db upgrade")
-    app.run(host="0.0.0.0", port=8900)
+    app.run(host="0.0.0.0", port=8900, debug=True)
 

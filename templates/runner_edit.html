@@ -44,10 +44,17 @@
         {
             color: #fff;
         }
+        .draghandle
+        {
+            display: inline; color: #696969; 
+            font-size: 22px; 
+        }
+        .dragheader
+        {
+            visibility: hidden;
+        }
     </style>
 </head>
-
-
 
 <body>
 
@@ -61,6 +68,11 @@
                 <div class="col-md-8">
                     <h2>{{ cmds_name }}</h2>
                     <b-table hover responsive borderless primary-key="id" :striped="true" :table-variant="primary" :items="commands" :fields="fields" v-sortable="sortableOptions" >
+                        <template v-slot:cell(drag)="row">
+                                <div class="text-center">
+                                    <a href="javascript:void(0)" class="draghandle"><i class="las la-grip-lines"></i></a>
+                                </div>
+                        </template>
                         <template v-slot:cell(cmd)="row">
                             <b-form-select :options="cmd_types" v-model="row.item.cmd" v-on:change="update_arg(row.item)"/>
                         </template>
@@ -78,15 +90,15 @@
                         </template>
                         <template #cell(action)="data" >
                             <div class="text-center">
-                                <a href="#/" class="action-ico" @click="insertRow(data.index)"><i class="las la-plus-circle"></i></a>
-                                <a href="#/" class="action-ico" @click="deleteRow(data.index)"><i class="las la-trash-alt"></i></a>
+                                <a href="javascript:void(0)" class="action-ico" @click="insertRow(data.index)"><i class="las la-plus-circle"></i></a>
+                                <a href="javascript:void(0)" class="action-ico" @click="deleteRow(data.index)"><i class="las la-trash-alt"></i></a>
                             </div>
 
                         </template>
                     </b-table>
 
                     <div class="row">
-                        <div class="col-sm-6 mt-5">
+                        <div class="col-sm-6 my-5">
                             <div v-if="this.commands.length == 0" style="display: inline-block; margin: 0px 10px 0px 10px;">
                                 <b-button variant="outline-primary" @click="appendRow" style="display: inline-block;">Add Command</b-button>
                             </div>
@@ -186,7 +198,7 @@
             },
             directives: { sortable },
             data: {
-                fields: [{ key: "cmd", label: "CommandType", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "arg", label: "Argument", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "action", thClass: 'd-none action-col', tdClass: 'align-middle action-col' }],
+                fields: [{ key: "drag", thClass: 'invisible' }, { key: "cmd", label: "CommandType", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "arg", label: "Argument", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "action", thClass: 'd-none action-col', tdClass: 'align-middle action-col' }],
                 commands: [],
                 commands_id: '',
                 sortableOptions: {},
@@ -265,7 +277,7 @@
                 
                 this.commands = parsedat(JSON.parse({{ cmds_dat | tojson }}));
                 this.commands_id = parseInt({{ cmds_id}});
-                this.sortableOptions = { onEnd: this.reorder };
+                this.sortableOptions = { onEnd: this.reorder, handle: '.draghandle' };
                 btnpress_str.forEach((b) => {
                     this.btnpress_types.push({value: String(b), text: String(b)});
                 });
