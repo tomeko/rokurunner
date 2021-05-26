@@ -79,12 +79,17 @@ Visit http://localhost:8900 which presents you with the main interface.
   - Thanks to [python-roku](https://github.com/jcarbaugh/python-roku) for the inspiration and [Dan Krause](https://github.com/dankrause) for his [SSDP code](https://gist.github.com/dankrause/6000248) (I had to modify the gist, it won't work with multiple local network interfaces, solved by binding the socket to the local address)
   - My first webapp with a 'modern' front-end framework. I really appreciate being able to using VueJs 'single-page style' without having to install a gigantic build environment ([cough](https://hackernoon.com/how-it-feels-to-learn-javascript-in-2016-d3a717dd577f))
   
+## Limitations
+
+  - An inherent limitation is the "open-loop" system style of commands received by the Roku. There is no guarantee the command was executed, nor any way to check whether an channel has launched. Usually though if you provide a sufficient delay the runners should be fairly repeatable.
+  - Currently when visiting the endpoint via web browser, there is no indication of runner progress. This might be a todo feature if the need arises.
   
 ## TODO
   
-  - Add different units to delay
+  - Update python executor to prevent launching multiple runners on same device
+  - Add seconds option to to delay (currently milliseconds only)
   - Add a random move command, with max random limit
-  - Incorporate MQTT to subscribe to topics and run endpoints (IOT stuff)
+  - Incorporate a MQTT client to subscribe to topics and run endpoints (IOT stuff)
       
       
       
