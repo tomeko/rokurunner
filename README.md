@@ -9,14 +9,15 @@ RokuRunner is a webapp for easily automating Roku remote keypresses (and more)
  
  ## Use cases
 
- Simple:
+ *Simple:*
  
  - Launch a channel (other than the ones built into your remote)
- - Launch a channel and automatically select to some specific or random content
+ - Launch a channel and automatically select some specific or random content
  - Set a sleep timer (if your Roku device supports power-off via remote)
  - more to come
 
-Advanced:
+*Advanced:*
+
  - Hook up generated endpoints to other automated services (e.g. Google Home, Alexa, etc.)
  - Hook up generated endpoints to IOT devices (e.g. IR bridge, lights, etc.)
  
@@ -75,13 +76,14 @@ Visit http://localhost:8900 which presents you with the main interface.
 ## Development
 
   - Shout out the the original inspiration for this, my Grandma, who I built this for to be able to tune to her favorite international streaming channel with one remote button press
-  - Thanks to [python-roku]([python-roku](https://github.com/jcarbaugh/python-roku)) for the inspiration and [Dan Krause](https://github.com/dankrause) for his [SSDP code](https://gist.github.com/dankrause/6000248) (I had to modify the gist, it won't work with multiple local network interfaces, solved by binding the socket to the local address)
+  - Thanks to [python-roku](https://github.com/jcarbaugh/python-roku) for the inspiration and [Dan Krause](https://github.com/dankrause) for his [SSDP code](https://gist.github.com/dankrause/6000248) (I had to modify the gist, it won't work with multiple local network interfaces, solved by binding the socket to the local address)
   - My first webapp with a 'modern' front-end framework. I really appreciate being able to using VueJs 'single-page style' without having to install a gigantic build environment ([cough](https://hackernoon.com/how-it-feels-to-learn-javascript-in-2016-d3a717dd577f))
   
   
 ## TODO
   
   - Add different units to delay
+  - Add a random move command, with max random limit
   - Incorporate MQTT to subscribe to topics and run endpoints (IOT stuff)
       
       
