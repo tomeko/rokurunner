@@ -107,15 +107,14 @@ curr_runner = None
 def exec_runner(dev, runner):
     try:
         global curr_runner
+        print(f'Started runner: {curr_runner}')
         for cmd in runner:
             s = requests.Session()
             if cmd.type == CommandTypes.DELAY:
                 delays = float(cmd.arg)/1000
-                print(f'sleeping {delays}')
                 sleep(delays)
                 
             elif cmd.type == CommandTypes.BUTTON_PRESS:
-                print(f'buttonpress: {ButtonPressCommands(cmd.arg).name}')
                 url = f'http://{dev.ip}:8060/keypress/{ButtonPressCommands(cmd.arg).name}'
                 r = s.post(url)
                 
@@ -124,6 +123,7 @@ def exec_runner(dev, runner):
             elif cmd.type == CommandTypes.CHAR_LIT:
                 url = f'http://{dev.ip}:8060/keypress/Lit_{quote_plus(cmd.arg[0])}'
                 r = s.post(url)
+        print(f'Finish runner: {curr_runner}')
         curr_runner = None
     except Exception as ex:
         print(str(ex))
