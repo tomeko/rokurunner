@@ -45,7 +45,7 @@ Visit http://localhost:8900 which presents you with the main interface.
 ### Main interface
 
   - Roku Devices
-    - Add your Roku devices here by their IP address. Clicking `Manual Add` will let you enter the IP address manually
+    - Add your Roku devices here by their IP address. Clicking `Manual Add` will let you enter the IP address manually. (To find your Roku's IP address, from your Roku goto Settings - Network - About)
     - Clicking Auto Search will search for Roku devices on your network, and display them by IP address and UUID. Press the + button to add a discovered Roku to the Roku Devices list, update the name, then `Save Changes`.
  
   - Runners
