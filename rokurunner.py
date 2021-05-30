@@ -16,7 +16,7 @@ import requests
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///rokurunner.db"
 app.config['EXECUTOR_TYPE'] = 'thread'
-app.config['EXECUTOR_MAX_WORKERS'] = 5
+app.config['EXECUTOR_MAX_WORKERS'] = 1
 
 app.config['TESTING'] = True
 
@@ -101,31 +101,47 @@ class Command:
     def __repr__(self):
         return f"{self.type}"
 
+# quick hacky busy flag to only allow one runner at a time
+curr_runner = None
+
 def exec_runner(dev, runner):
     try:
+        global curr_runner
         for cmd in runner:
             s = requests.Session()
             if cmd.type == CommandTypes.DELAY:
                 delays = float(cmd.arg)/1000
+                print(f'sleeping {delays}')
                 sleep(delays)
+                
             elif cmd.type == CommandTypes.BUTTON_PRESS:
+                print(f'buttonpress: {ButtonPressCommands(cmd.arg).name}')
                 url = f'http://{dev.ip}:8060/keypress/{ButtonPressCommands(cmd.arg).name}'
                 r = s.post(url)
+                
             elif cmd.type == CommandTypes.HTTPREQUEST:
                 s.post(cmd.arg)
             elif cmd.type == CommandTypes.CHAR_LIT:
                 url = f'http://{dev.ip}:8060/keypress/Lit_{quote_plus(cmd.arg[0])}'
                 r = s.post(url)
+        curr_runner = None
     except Exception as ex:
         print(str(ex))
-            
 
 @app.route("/exec", methods=["GET"])
 def exec():
     runner = Runner.query.filter_by(id=request.args.get("runner_id")).first()
     dev = RokuDevice.query.filter_by(id=request.args.get("dev_id")).first()
-    executor.submit(exec_runner, dev, runner.cmds)
-    return render_template("exec.html", msg=f"Running {runner.name}...")
+    global curr_runner
+    
+    if not curr_runner:
+        curr_runner = runner.name
+        msg = f"Running {curr_runner}..."
+        executor.submit(exec_runner, dev, runner.cmds)
+    else:
+        msg = f"Busy with {curr_runner}"
+
+    return render_template("exec.html", msg=msg)
 
 @app.route("/save_eps", methods=["POST"])
 def save_eps():
