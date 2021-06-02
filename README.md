@@ -72,7 +72,7 @@ Visit http://localhost:8900 which presents you with the main interface.
   - SendCharacter
     - Sends a character (literal) to the RokuDevice (e.g. when the keyboard on the Roku is open)
   - RandomMove
-    - Performs a series of random controller moves (Up, Down, Left, Right). Each movement is selectable (example: select Right and Down to only move those directions), and a millisecond delay between movement commands can be adjusted.
+    - Performs a series of random controller moves (Up, Down, Left, Right) specified by number of loops. Each movement is selectable (example: select Right and Down to only move those directions), and a millisecond delay between movement commands can be adjusted.
       
 ## Development
 
