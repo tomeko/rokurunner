@@ -18,8 +18,7 @@ RokuRunner is a webapp for easily automating Roku remote keypresses (and more)
 
 *Advanced:*
 
- - Hook up generated endpoints to other automated services (e.g. Google Home, Alexa, etc.)
- - Hook up generated endpoints to IOT devices (e.g. IR bridge, lights, etc.)
+ - Hook up generated endpoints to other automated services or IOT devices (e.g. Google Home, Alexa, IR bridge, lights, etc.)
  
 
 Main interface       |  Runner editor
