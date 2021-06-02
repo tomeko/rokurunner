@@ -81,7 +81,7 @@ Visit http://localhost:8900 which presents you with the main interface.
   
 ## Limitations
 
-  - An inherent limitation is the "open-loop" system style of commands received by the Roku. There is no guarantee the command was executed, nor any way to check whether an channel has launched. Usually though if you provide a sufficient delay the runners should be fairly repeatable.
+  - An inherent limitation is the "open-loop" system style of commands received by the Roku. There is no guarantee the command will be executed nor any way to check whether an channel has launched. Usually though if you provide a sufficient delay the runners should be fairly repeatable.
   
 ## TODO
   
