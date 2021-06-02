@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify, request
-import os, json
+import os, json, random
 from time import sleep
 from enum import IntEnum
 from flask_sqlalchemy import SQLAlchemy
@@ -10,7 +10,7 @@ from sqlalchemy.types import PickleType
 from flask_migrate import Migrate
 from urllib.parse import quote_plus
 from flask_executor import Executor
-from discovery import discover
+from discovery import discover  # has update to work with multiple network interfaces
 import requests
 
 app = Flask(__name__)
@@ -18,17 +18,16 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///rokurunner.db"
 app.config['EXECUTOR_TYPE'] = 'thread'
 app.config['EXECUTOR_MAX_WORKERS'] = 1
 
-app.config['TESTING'] = True
-
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 executor = Executor(app)
 
 class CommandTypes(IntEnum):
-    BUTTON_PRESS = 0
-    DELAY = 1
-    HTTPREQUEST = 2
-    CHAR_LIT = 3
+    ButtonPress = 0
+    Delay = 1
+    HttpRequest = 2
+    CharLiteral = 3
+    RandomMove = 4
 
 class ButtonPressCommands(IntEnum):
     Home = 0
@@ -57,7 +56,6 @@ class ButtonPressCommands(IntEnum):
     InputHDMI4 = 23
     InputAV1 = 24
     Lit = 25
-
 
 class RokuDevice(db.Model):
     __tablename__ = "rokudevice"
@@ -92,42 +90,60 @@ class RunnerEndpoint(db.Model):
     dev_id = db.Column(db.Integer, unique=False, nullable=False)
     runner_id = db.Column(db.Integer, unique=False, nullable=False)
 
-# this is pickled in the Runner class as cmds
-class Command:
-    def __init__(self, type, arg):
-        self.type = type
-        self.arg = arg
+# Command is pickled in the Runner class as cmds
+# opts is dict of extra argument/options defined below
+# key                   type        description
+# =================   ========     ==============================================
+# delay_unit           str         ms, s, or h units for Delay command
+# randmove_loops       int         how many times the RandomMove command executes
+# randmove_delay       int         ms delay for RandomMove command
+# randmove_btns        str[]       which buttons included in the RandomMove command
 
-    def __repr__(self):
-        return f"{self.type}"
+class Command:
+    def __init__(self, cmd_type, val, opts):
+        self.cmd_type = cmd_type
+        self.val = val
+        self.opts = opts
 
 # quick hacky busy flag to only allow one runner at a time
+# todo: show status of runner, or queue them up
 curr_runner = None
 
+# execute runner
 def exec_runner(dev, runner):
     try:
         global curr_runner
         print(f'Started runner: {curr_runner}')
         for cmd in runner:
-            s = requests.Session()
-            if cmd.type == CommandTypes.DELAY:
-                delays = float(cmd.arg)/1000
-                sleep(delays)
-                
-            elif cmd.type == CommandTypes.BUTTON_PRESS:
-                url = f'http://{dev.ip}:8060/keypress/{ButtonPressCommands(cmd.arg).name}'
+            if cmd.cmd_type != CommandTypes.Delay.name:
+                s = requests.Session()
+            if cmd.cmd_type == CommandTypes.Delay.name:
+                delay = float(cmd.val)
+                unit = cmd.opts["delay_unit"]
+                if unit == 'ms':
+                    delay /= 1000
+                elif unit == 'h':
+                    delay *= 3600
+                sleep(delay)
+            elif cmd.cmd_type == CommandTypes.ButtonPress.name:
+                url = f'http://{dev.ip}:8060/keypress/{cmd.val}'
                 r = s.post(url)
-                
-            elif cmd.type == CommandTypes.HTTPREQUEST:
+            elif cmd.cmd_type == CommandTypes.HttpRequest.name:
                 s.post(cmd.arg)
-            elif cmd.type == CommandTypes.CHAR_LIT:
-                url = f'http://{dev.ip}:8060/keypress/Lit_{quote_plus(cmd.arg[0])}'
+            elif cmd.cmd_type == CommandTypes.CharLiteral.name:
+                url = f'http://{dev.ip}:8060/keypress/Lit_{quote_plus(cmd.val[0])}'
                 r = s.post(url)
+            elif cmd.cmd_type == CommandTypes.RandomMove.name:
+                for i in range(int(cmd.opts["randmove_loops"])):
+                    url = f'http://{dev.ip}:8060/keypress/{random.choice(cmd.opts["randmove_btns"])}'
+                    s.post(url)
+                    sleep(float(cmd.opts["randmove_delay"])/1000)
         print(f'Finish runner: {curr_runner}')
         curr_runner = None
     except Exception as ex:
         print(str(ex))
 
+# execute runner route
 @app.route("/exec", methods=["GET"])
 def exec():
     runner = Runner.query.filter_by(id=request.args.get("runner_id")).first()
@@ -143,6 +159,7 @@ def exec():
 
     return render_template("exec.html", msg=msg)
 
+# save runner endpoints
 @app.route("/save_eps", methods=["POST"])
 def save_eps():
     try:
@@ -159,6 +176,7 @@ def save_eps():
     except Exception as e:
         return json.dumps({"status": str(e)})
 
+# save devices
 @app.route("/save_devs", methods=["POST"])
 def save_devs():
     try:
@@ -205,6 +223,7 @@ def save_runners():
     except Exception as e:
         return json.dumps({"status" : str(e)})
 
+# homepage get
 @app.route("/", methods=["GET"])
 def home():
     
@@ -223,6 +242,7 @@ def home():
             ep_list.append({"name" : ep.name, "dev_id": ep.dev_id, "runner_id": ep.runner_id})
         return render_template("home.html", devs=devs_list, cmds=runner_list, eps=ep_list)
 
+# endpoint to find local rokus
 @app.route("/roku_list")
 def roku_list():
     rokus = discover()
@@ -231,6 +251,7 @@ def roku_list():
         ret.append({ "ip" : r.location, "usn" : r.usn})
     return json.dumps(ret)
 
+# runner edit/view
 @app.route("/runner_edit", methods=["GET", "POST"])
 def runner_edit():
     try:
@@ -252,7 +273,7 @@ def runner_edit():
             
             runner.cmds.clear()
             for c in cmds_arr:
-                newc = Command(c["cmd"], c["arg"])
+                newc = Command(c["cmd_type"], c["val"], c["opts"])
                 runner.cmds.append(newc)
 
             db.session.commit()
@@ -264,13 +285,14 @@ def runner_edit():
             else:
                 runner_dat = []
                 for cmd in runner.cmds:
-                    dict = {"cmd": int(cmd.type), "arg": cmd.arg}
+                    dict = {"cmd_type": cmd.cmd_type, "val": cmd.val, "opts": cmd.opts}
                     runner_dat.append(dict)
                 return render_template("runner_edit.html", cmds_id=runner.id, cmds_name=runner.name, cmds_dat=json.dumps(runner_dat))
     except Exception as e:
         return str(e)
 
 if __name__ == "__main__":
+    # not ideal but meh
     os.system("flask db init")
     os.system("flask db migrate")
     os.system("flask db upgrade")

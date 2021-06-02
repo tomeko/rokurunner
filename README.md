@@ -67,11 +67,12 @@ Visit http://localhost:8900 which presents you with the main interface.
     - Set ButtonPress type in the argument dropdown. Note: All button types are exposed, but some Roku devices don't support certain button press types (e.g. PowerOn, PowerOff, InputHMDI1, etc)
   - Delay
     - Set a delay (ms) in the argument field
-  - HTTPRequest
+  - HttpRequest
     - Performs a `POST` request (no data) to the endpoint entered in the argument field.
   - SendCharacter
     - Sends a character (literal) to the RokuDevice (e.g. when the keyboard on the Roku is open)
-      
+  - RandomMove
+    - Performs a series of random controller moves (Up, Down, Left, Right). Each movement is selectable (example: select Right and Down to only move those directions), and a millisecond delay between movement commands can be adjusted.
       
 ## Development
 
@@ -82,14 +83,14 @@ Visit http://localhost:8900 which presents you with the main interface.
 ## Limitations
 
   - An inherent limitation is the "open-loop" system style of commands received by the Roku. There is no guarantee the command was executed, nor any way to check whether an channel has launched. Usually though if you provide a sufficient delay the runners should be fairly repeatable.
-  - Currently when visiting the endpoint via web browser, there is no indication of runner progress. This might be a todo feature if the need arises.
   
 ## TODO
   
-  - Update python executor to prevent launching multiple runners on same device
-  - Add seconds option to to delay (currently milliseconds only)
-  - Add a random move command, with max random limit
-  - Incorporate a MQTT client to subscribe to topics and run endpoints (IOT stuff)
+  - Dockerize. The way the Flask app is run is not ideal (e.g. running the db init stuff at startup) but simplifies deployment.
+  - Tested this on a RaspberryPi Zero-W, turns out `pipenv` was a pain to get running properly. Include a simplified deployment for that scenario.
+  - Maybe incorporate a MQTT client to subscribe to topics and run endpoints (IOT stuff)?
+  - more testing
+  
       
       
       

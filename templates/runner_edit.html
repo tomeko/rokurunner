@@ -24,7 +24,7 @@
         }
 
         .action-col {
-            width: 200px !important;
+            width: 150px !important;
         }
         .action-ico
         {
@@ -53,6 +53,10 @@
         {
             visibility: hidden;
         }
+        .rmove-opts
+        {
+            font-size: 0.7em;
+        }
     </style>
 </head>
 
@@ -65,7 +69,7 @@
 
         <div class="container pt-5">
             <div class="row justify-content-center">
-                <div class="col-md-8">
+                <div class="col-md-9">
                     <h2>{{ cmds_name }}</h2>
                     <b-table hover responsive borderless primary-key="id" :striped="true" :table-variant="primary" :items="commands" :fields="fields" v-sortable="sortableOptions" >
                         <template v-slot:cell(drag)="row">
@@ -73,25 +77,51 @@
                                     <a href="javascript:void(0)" class="draghandle"><i class="las la-grip-lines"></i></a>
                                 </div>
                         </template>
-                        <template v-slot:cell(cmd)="row">
-                            <b-form-select :options="cmd_types" v-model="row.item.cmd" v-on:change="update_arg(row.item)"/>
+                        <template v-slot:cell(cmd_type)="row">
+                            <b-form-select :options="command_types" v-model="row.item.cmd_type"/>
                         </template>
                         <template v-slot:cell(arg)="row" >
-                            <div v-if="row.item.cmd === 'Delay'" class="d-flex justify-content-center" >
-                                <b-form-input v-model="row.item.arg" type="number" v-on:change="edited = true;" style="width: 120px;"></b-form-input>
-                                <div style="margin-top: 5px; margin-left: 10px;">ms</div>
+                            <div v-if="row.item.cmd_type === 'Delay'" class="d-flex justify-content-center" >
+                                <b-form-input v-model='row.item.delay_val' type="number" v-on:change="edited = true;" style="width: 120px;"></b-form-input>
                             </div>
-                            <div v-if="row.item.cmd === 'ButtonPress'">
-                                <b-form-select :options="btnpress_types" v-model="row.item.arg" v-on:change="edited = true;" v-if="row.item.cmd === 'ButtonPress'" />
+                            <div v-if="row.item.cmd_type === 'ButtonPress'">
+                                <b-form-select :options="btnpress_types" v-model='row.item.btnpress_val' v-on:change="edited = true;"/>
                             </div>
-                            <div v-if="row.item.cmd === 'HTTPRequest' || row.item.cmd === 'SendCharacter'">
-                                <b-form-input v-model="row.item.arg" v-on:change="edited = true;" style="height: 27px; margin-left: auto; margin-right: auto;"/>
+                            <div v-if="row.item.cmd_type === 'HttpRequest'">
+                                <b-form-input v-model="row.item.httpreq_val" v-on:change="edited = true;" style="height: 27px; margin-left: auto; margin-right: auto;"/>
+                            </div>
+                            <div v-if="row.item.cmd_type === 'CharLiteral'">
+                                <b-form-input v-model="row.item.charlit_val" v-on:change="edited = true;" style="height: 27px; margin-left: auto; margin-right: auto;"/>
+                            </div>
+                        </template>
+                        <template v-slot:cell(opts)="row" >
+                            <div v-if="row.item.cmd_type === 'Delay'" class="d-flex justify-content-center" >
+                                <b-form-select :options="delay_unit_opts" v-model='row.item.delay_unit' v-on:change="edited = true;" class="ml-2"/>
+                            </div>
+                            <div v-if="row.item.cmd_type === 'RandomMove'" class="d-flex justify-content-center">
+                                <div class="row rmove-opts">
+                                    <div class="col">
+                                        Button
+                                        <b-form-select multiple :options="randmove_btn_opts" v-model="row.item.randmove_btns" v-on:change="edited = true;"></b-form-select>
+                                    </div>
+                                    <div class="col">
+                                        <div>
+                                            Loops
+                                            <b-form-input v-model="row.item.randmove_loops" type="number" v-on:change="edited = true;" style="width: 80px;"></b-form-input>
+                                        </div>
+                                        <div>
+                                            Delay (ms)
+                                            <b-form-input v-model="row.item.randmove_delay" type="number" v-on:change="edited = true;" style="width: 80px;"></b-form-input>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </template>
                         <template #cell(action)="data" >
                             <div class="text-center">
-                                <a href="javascript:void(0)" class="action-ico" @click="insertRow(data.index)"><i class="las la-plus-circle"></i></a>
-                                <a href="javascript:void(0)" class="action-ico" @click="deleteRow(data.index)"><i class="las la-trash-alt"></i></a>
+                                <a href="javascript:void(0)" class="action-ico" @click="crud(CRUD_E.CLONE, data.index)"><i class="las la-copy"></i></a>
+                                <a href="javascript:void(0)" class="action-ico" @click="crud(CRUD_E.INSERT, data.index)"><i class="las la-plus-circle"></i></a>
+                                <a href="javascript:void(0)" class="action-ico" @click="crud(CRUD_E.DELETE, data.index)"><i class="las la-trash-alt"></i></a>
                             </div>
 
                         </template>
@@ -100,7 +130,7 @@
                     <div class="row">
                         <div class="col-sm-6 my-5">
                             <div v-if="this.commands.length == 0" style="display: inline-block; margin: 0px 10px 0px 10px;">
-                                <b-button variant="outline-primary" @click="appendRow" style="display: inline-block;">Add Command</b-button>
+                                <b-button variant="outline-primary" @click="crud(CRUD_E.APPEND, null)" style="display: inline-block;">Add Command</b-button>
                             </div>
                             <div v-if="edited" style="display: inline-block;">
                                 <b-button variant="danger" @click="save" style="display: inline-block;">Save Changes</button>
@@ -117,65 +147,8 @@
     </div>
 
     <script>
-        
-        function swap(json)
-        {
-            var ret = {};
-            for(var key in json)
-                ret[json[key]] = key;
-            return ret;
-        }
-
-        // data encode/decode helpers
-        const command_t = { 0: "ButtonPress", 1: "Delay", 2: "HTTPRequest", 3: "SendCharacter" };
-        const commands_len = Object.keys(command_t).length;
-        const command_t_inv = swap(command_t);
-        const btnpress_str = ["Home", "Reverse", "Forward", "Play", "Select", "Left", "Right", "Down", "Up", "Back", "InstantReplay", "Info", "Backspace", "Search", "Enter", "VolumeDown", "VolumeMute", "VolumeUp", "PowerOff", "InputTuner", "InputHDMI1", "InputHDMI2", "InputHDMI3", "InputHDMI4", "InputAV1"];
-        const btnpress_t = {};
-        btnpress_str.forEach((el, idx) => btnpress_t[idx] = el);    // build indexed hashtable for btnpress_str, ex: {0: "Left", 1: "Up", ...etc}
-
-        // unique key needed for drag sorting, otherwise reactiveness scrambles everything
-        // see https://stackoverflow.com/a/48484974
-        var cmd_idx = 0;
-
-        function parsedat(jsondat)
-        {
-            ret = []
-            for (var i in jsondat)
-            {
-                var cmdparsed = command_t[jsondat[i].cmd];
-                var argparsed;
-
-                if (jsondat[i].cmd == 0)
-                    argparsed = btnpress_str[jsondat[i].arg];
-                else
-                    argparsed = jsondat[i].arg;
-                
-                ret.push({cmd: cmdparsed, arg: argparsed, id: cmd_idx++});
-                    
-            }
-            return ret;
-        }
-
-        function encodedat(dat)
-        {
-            ret = [];
-
-            for (var i in dat)
-            {
-                var cmdenc = parseInt(command_t_inv[dat[i].cmd]);
-                var argenc;
-                if (cmdenc == 0)
-                    argenc = parseInt(btnpress_str.indexOf(dat[i].arg));
-                else
-                    argenc = dat[i].arg;
-                ret.push({ cmd: cmdenc, arg: argenc});
-            }
-            return ret;
-        }
 
         const createSortable = (el, options, vnode) => {
-
             return Sortable.create(el, {
                 ...options
                 
@@ -190,6 +163,9 @@
             }
         };
 
+        const CRUD_E = {INSERT:1, APPEND:2, DELETE:3, CLONE:4 };
+        
+        // todo: there are a couple warnings re:  "on during [Vue warn]: Property or method "primary" is not defined on the instance but referenced during render" prob related to using row.item for the v-model. Still works, just annoying
         var vm = new Vue({
 
             el: '#app',
@@ -198,60 +174,152 @@
             },
             directives: { sortable },
             data: {
-                fields: [{ key: "drag", thClass: 'invisible' }, { key: "cmd", label: "CommandType", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "arg", label: "Argument", tdClass: 'text-center align-middle', thClass: 'text-center' }, { key: "action", thClass: 'd-none action-col', tdClass: 'align-middle action-col' }],
+                fields: [{ key: "drag", thClass: 'invisible' }, 
+                    { key: "cmd_type", label: "CommandType", tdClass: 'text-center align-middle', thClass: 'text-center' },     
+                    { key: "arg", label: "Argument", tdClass: 'text-center align-middle', thClass: 'text-center' },
+                    { key: "opts", label: "Options", tdClass: 'text-center align-middle', thClass: 'text-center' },
+                    
+                    { key: "btnpress_val", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "delay_val", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "httpreq_val", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "charlit_val", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "delay_unit", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "randmove_loops", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "randmove_delay", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "randmove_btns", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "action", thClass: 'd-none action-col', tdClass: 'align-middle action-col' },
+                    
+                    ],
+                cmd_idx: 0,  // unique key (as a counter) needed for sortablejs drag sorting, otherwise reactiveness scrambles everything, see https://stackoverflow.com/a/48484974                  
                 commands: [],
+                command_types: ["ButtonPress", "Delay", "HttpRequest", "CharLiteral", "RandomMove"],
+                btnpress_types: ["Home", "Reverse", "Forward", "Play", "Select", "Left", "Right", "Down", "Up", "Back", "InstantReplay", "Info", "Backspace", "Search", "Enter", "VolumeDown", "VolumeMute", "VolumeUp", "PowerOff", "InputTuner", "InputHDMI1", "InputHDMI2", "InputHDMI3", "InputHDMI4", "InputAV1"],
                 commands_id: '',
                 sortableOptions: {},
                 edited: false,
-                cmd_types: [],
-                btnpress_types: []
+                delay_unit_opts: ["ms", "s", "h"],
+                randmove_btn_opts: ['Left', 'Up', 'Right', 'Down'],
+                CRUD_E    // const enum defined above
             },
             delimiters: ['[[', ']]'],
             methods: {
-                insertRow(index) {
-                    if (index == this.commands.length - 1)
-                    {
-                        this.appendRow();
-                    } else
-                    {
-                        cmd_idx++;
-                        this.commands.splice(index, 0, { cmd: '', arg: '', id: cmd_idx });
-                        this.edited = true;
-                    }
-                },
+                
+                // insert, delete, append, etc.
+                crud(op, index)
+                {
+                    this.cmd_idx++;
 
-                deleteRow(index) {
-                    this.commands.splice(index, 1);
+                    if (op == CRUD_E.INSERT)
+                    {
+                        if (index == this.commands.length - 1)  // if last row
+                            this.commands.push(this.getDefaultCmd());
+                        else
+                        {
+                            this.commands.splice(index, 0, this.getDefaultCmd());
+                            this.edited = true;
+                        }
+
+                    } else if (op == CRUD_E.APPEND)
+                    {
+                        this.commands.push(this.getDefaultCmd());
+
+                    } else if (op == CRUD_E.DELETE)
+                    {
+                        this.commands.splice(index, 1);
+
+                    } else if (op == CRUD_E.CLONE)
+                    {
+                        var copied = JSON.parse(JSON.stringify(this.commands[index]))
+                        copied.id = ++this.cmd_idx;
+                        this.commands.splice(index, 0, copied);
+
+                    }
                     this.edited = true;
                 },
-
+                // needed for sortable/drag
                 reorder ({oldIndex, newIndex}) {
                     const movedItem = this.commands.splice(oldIndex, 1)[0];
                     this.commands.splice(newIndex, 0, movedItem);
                     this.edited = true;
                 },
+                // returns a new default command
+                getDefaultCmd()
+                {
+                    return { cmd_type: 'ButtonPress', btnpress_val: 'Left', delay_val: '300', delay_unit: 'ms', randmove_loops: 1, randmove_delay: "100", randmove_btns: this.randmove_btn_opts, id: ++this.cmd_idx};
+                },
+                // since fields are needed for b-table, have to import all data to local objects. There's gotta be a better way to do this
+                importCmds(jsondat)
+                {
+                    ret = []
+                    var idx = 0;
+                    for (var i in jsondat)
+                    {
+                        var cmd = this.getDefaultCmd();
+                        var opts = jsondat[i].opts;
+                        var val = jsondat[i].val;
+                        cmd.cmd_type = jsondat[i].cmd_type;
+                        
+                        if (cmd.cmd_type == 'ButtonPress')
+                        {
+                            cmd.btnpress_val = val;
+                        } else if (cmd.cmd_type == 'Delay')
+                        {
+                            cmd.delay_val = val; 
+                            cmd.delay_unit = opts.delay_unit;
+                        } else if (cmd.cmd_type == 'HttpRequest')
+                        {
+                            cmd.httpreq_val = val;
+                        } else if (cmd.cmd_type == 'CharLiteral')
+                        {
+                            cmd.charlit_val = val;
+                        } else if (cmd.cmd_type == 'RandomMove')
+                        {
+                            cmd.randmove_loops = opts.randmove_loops;
+                            cmd.randmove_delay = opts.randmove_delay;
+                            cmd.randmove_btns = opts.randmove_btns;
+                        }
+                        ret.push(cmd);
+                    }
+                        
+                    return ret;
+                },
+                // like importCmds, needed because b-table needs individual fields, so we map them out. Gotta be a better way
+                exportCmds(cmds)
+                {
+                    ret = [];
+                    for (var i=0; i<cmds.length; i++)
+                    {
+                        var rval = '';
+                        var opts = {};
+                        if (cmds[i].cmd_type == 'ButtonPress')
+                        {
+                            rval = cmds[i].btnpress_val;
+                        } else if (cmds[i].cmd_type == 'Delay')
+                        {
+                            rval = cmds[i].delay_val;
+                            opts['delay_unit'] = cmds[i].delay_unit;
+                        } else if (cmds[i].cmd_type == 'HttpRequest')
+                        {
+                            rval = cmds[i].httpreq_val;
+                        } else if (cmds[i].cmd_type == 'CharLiteral')
+                        {
+                            rval = cmds[i].charlit_val;
+                        } else if (cmds[i].cmd_type == 'RandomMove')
+                        {
+                            opts['randmove_loops'] = cmds[i].randmove_loops;
+                            opts['randmove_delay'] = cmds[i].randmove_delay;
+                            opts['randmove_btns'] = cmds[i].randmove_btns;
+                        }
 
-                appendRow()
-                {
-                    cmd_idx++;
-                    this.commands.push({ cmd: 'ButtonPress', arg: '', id: cmd_idx});
-                    this.edited = true;
+                        ret.push({ cmd_type: cmds[i].cmd_type, val: rval, opts: opts });
+                    }
+                    return ret;
                 },
-                update_arg(cmdset)
-                {
-                    this.edited = true;
-                    cmdset.arg = '';
-                },
+                // posts a save command
                 save()
                 {
-                    if (this.commands.some(c => c.cmd === '') || this.commands.some(c => c.arg === ''))
-                    {
-                        this.$bvModal.msgBoxOk('Some fields missing, please fix first');
-                        return;
-                    }
-                    var cmds = encodedat(this.commands);
-                    var cmds_id = { "cmds_id": this.commands_id};
-                    var ret = [cmds_id, cmds];
+                    var cmds = this.exportCmds(this.commands);
+                    var ret = [{ cmds_id: this.commands_id}, cmds];
                     const url = `${window.location.origin}/runner_edit`;
                     const options = 
                     {
@@ -274,15 +342,10 @@
             template: '',
             created: function ()
             {
-                
-                this.commands = parsedat(JSON.parse({{ cmds_dat | tojson }}));
-                this.commands_id = parseInt({{ cmds_id}});
+                // server passes in: commands (runner = array of dicts), commands_id (primary key of runner)
+                this.commands = this.importCmds(JSON.parse({{ cmds_dat | tojson }}));
+                this.commands_id = parseInt({{ cmds_id }});
                 this.sortableOptions = { onEnd: this.reorder, handle: '.draghandle' };
-                btnpress_str.forEach((b) => {
-                    this.btnpress_types.push({value: String(b), text: String(b)});
-                });
-                for (var key in command_t)
-                    this.cmd_types.push({value: String(command_t[key]), text: String(command_t[key]) });
             }
         });
     </script>
