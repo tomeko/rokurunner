@@ -78,7 +78,7 @@ Visit http://localhost:8900 which presents you with the main interface.
 
   - Shout out the the original inspiration for this, my Grandma, who I built this for to be able to tune to her favorite international streaming channel with one remote button press
   - Thanks to [python-roku](https://github.com/jcarbaugh/python-roku) for the inspiration and [Dan Krause](https://github.com/dankrause) for his [SSDP code](https://gist.github.com/dankrause/6000248) (I had to modify the gist, it won't work with multiple local network interfaces, solved by binding the socket to the local address)
-  - My first webapp with a 'modern' front-end framework. I really appreciate being able to using VueJs 'single-page style' without having to install a gigantic build environment ([cough](https://hackernoon.com/how-it-feels-to-learn-javascript-in-2016-d3a717dd577f))
+  - My first webapp with a 'modern' front-end framework. I really appreciate being able to using VueJs 'single-page style' without having to install a gigantic build environment ([cough](https://hackernoon.com/how-it-feels-to-learn-javascript-in-2016-d3a717dd577f)). I'm sure I'll appreciate the build system some other time, but for a project this size it's all good.
   
 ## Limitations
 
