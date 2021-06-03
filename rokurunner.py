@@ -127,7 +127,15 @@ def exec_runner(dev, runner):
                 sleep(delay)
             elif cmd.cmd_type == CommandTypes.ButtonPress.name:
                 url = f'http://{dev.ip}:8060/keypress/{cmd.val}'
-                r = s.post(url)
+                
+                loops = int(cmd.opts['btnpress_loops'])
+                delay = float(cmd.opts['btnpress_delay']) / 1000
+
+                for i in range(loops):
+                    r = s.post(url)
+                    if delay > 0:
+                        sleep(delay)
+                        
             elif cmd.cmd_type == CommandTypes.HttpRequest.name:
                 s.post(cmd.arg)
             elif cmd.cmd_type == CommandTypes.CharLiteral.name:

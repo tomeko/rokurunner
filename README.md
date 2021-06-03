@@ -65,7 +65,9 @@ Visit http://localhost:8900 which presents you with the main interface.
   
   Command Types:
   - ButtonPress
-    - Set ButtonPress type in the argument dropdown. Note: All button types are exposed, but some Roku devices don't support certain button press types (e.g. PowerOn, PowerOff, InputHMDI1, etc)
+    - Set ButtonPress type in the argument dropdown. Note: All button types are exposed, but some Roku devices don't support certain button press types (e.g. PowerOn, PowerOff, InputHMDI1, etc). Optional arguments:
+      - Loops: How many times to execute this ButtonPress (default 1)
+      - Delay (ms): If running multiple Loops, set the delay in milliseconds between each Loop (default 0)
   - Delay
     - Set a delay (ms) in the argument field
   - HttpRequest

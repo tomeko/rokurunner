@@ -53,7 +53,7 @@
         {
             visibility: hidden;
         }
-        .rmove-opts
+        .xtra-opts
         {
             font-size: 0.7em;
         }
@@ -99,7 +99,7 @@
                                 <b-form-select :options="delay_unit_opts" v-model='row.item.delay_unit' v-on:change="edited = true;" class="ml-2"/>
                             </div>
                             <div v-else-if="row.item.cmd_type === 'RandomMove'" class="d-flex justify-content-center">
-                                <div class="row rmove-opts">
+                                <div class="row xtra-opts">
                                     <div class="col">
                                         Button
                                         <b-form-select multiple :options="randmove_btn_opts" v-model="row.item.randmove_btns" v-on:change="edited = true;"></b-form-select>
@@ -112,6 +112,20 @@
                                         <div>
                                             Delay (ms)
                                             <b-form-input v-model="row.item.randmove_delay" type="number" v-on:change="edited = true;" style="width: 80px;"></b-form-input>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else-if="row.item.cmd_type === 'ButtonPress'" class="d-flex justify-content-center">
+                                <div class="row xtra-opts">
+                                    <div class="col">
+                                        <div>
+                                            Loops
+                                            <b-form-input v-model="row.item.btnpress_loops" type="number" v-on:change="edited = true;" style="width: 80px;"></b-form-input>
+                                        </div>
+                                        <div>
+                                            Delay (ms)
+                                            <b-form-input v-model="row.item.btnpress_delay" type="number" v-on:change="edited = true;" style="width: 80px;"></b-form-input>
                                         </div>
                                     </div>
                                 </div>
@@ -174,7 +188,7 @@
             },
             directives: { sortable },
             data: {
-                fields: [{ key: "drag", thClass: 'invisible' }, 
+                fields: [{ key: "drag", thClass: 'invisible', tdClass: 'align-middle' }, 
                     { key: "cmd_type", label: "CommandType", tdClass: 'text-center align-middle', thClass: 'text-center' },     
                     { key: "arg", label: "Argument", tdClass: 'text-center align-middle', thClass: 'text-center' },
                     { key: "opts", label: "Options", tdClass: 'text-center align-middle', thClass: 'text-center' },
@@ -187,6 +201,8 @@
                     { key: "randmove_loops", thClass: 'd-none', tdClass: 'd-none' },
                     { key: "randmove_delay", thClass: 'd-none', tdClass: 'd-none' },
                     { key: "randmove_btns", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "btnpress_loops", thClass: 'd-none', tdClass: 'd-none' },
+                    { key: "btnpress_delay", thClass: 'd-none', tdClass: 'd-none' },
                     { key: "action", thClass: 'd-none action-col', tdClass: 'align-middle action-col' },
                     
                     ],
@@ -245,7 +261,7 @@
                 // returns a new default command
                 getDefaultCmd()
                 {
-                    return { cmd_type: 'ButtonPress', btnpress_val: 'Left', delay_val: '300', delay_unit: 'ms', randmove_loops: 1, randmove_delay: "100", randmove_btns: this.randmove_btn_opts, id: ++this.cmd_idx};
+                    return { cmd_type: 'ButtonPress', btnpress_val: 'Left', delay_val: '300', delay_unit: 'ms', btnpress_loops:1,  randmove_loops: 1, btnpress_delay: "0", randmove_delay: "100", randmove_btns: this.randmove_btn_opts, id: ++this.cmd_idx};
                 },
                 // since fields are needed for b-table, have to import all data to local objects. There's gotta be a better way to do this
                 importCmds(jsondat)
@@ -262,6 +278,8 @@
                         if (cmd.cmd_type == 'ButtonPress')
                         {
                             cmd.btnpress_val = val;
+                            cmd.btnpress_loops = opts.btnpress_loops;
+                            cmd.btnpress_delay = opts.btnpress_loops;
                         } else if (cmd.cmd_type == 'Delay')
                         {
                             cmd.delay_val = val; 
@@ -294,6 +312,8 @@
                         if (cmds[i].cmd_type == 'ButtonPress')
                         {
                             rval = cmds[i].btnpress_val;
+                            opts['btnpress_loops'] = cmds[i].btnpress_loops;
+                            opts['btnpress_delay'] = cmds[i].btnpress_delay;
                         } else if (cmds[i].cmd_type == 'Delay')
                         {
                             rval = cmds[i].delay_val;
