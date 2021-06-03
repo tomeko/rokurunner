@@ -84,13 +84,13 @@
                             <div v-if="row.item.cmd_type === 'Delay'" class="d-flex justify-content-center" >
                                 <b-form-input v-model='row.item.delay_val' type="number" v-on:change="edited = true;" style="width: 120px;"></b-form-input>
                             </div>
-                            <div v-if="row.item.cmd_type === 'ButtonPress'">
+                            <div v-else-if="row.item.cmd_type === 'ButtonPress'">
                                 <b-form-select :options="btnpress_types" v-model='row.item.btnpress_val' v-on:change="edited = true;"/>
                             </div>
-                            <div v-if="row.item.cmd_type === 'HttpRequest'">
+                            <div v-else-if="row.item.cmd_type === 'HttpRequest'">
                                 <b-form-input v-model="row.item.httpreq_val" v-on:change="edited = true;" style="height: 27px; margin-left: auto; margin-right: auto;"/>
                             </div>
-                            <div v-if="row.item.cmd_type === 'CharLiteral'">
+                            <div v-else-if="row.item.cmd_type === 'CharLiteral'">
                                 <b-form-input v-model="row.item.charlit_val" v-on:change="edited = true;" style="height: 27px; margin-left: auto; margin-right: auto;"/>
                             </div>
                         </template>
@@ -98,7 +98,7 @@
                             <div v-if="row.item.cmd_type === 'Delay'" class="d-flex justify-content-center" >
                                 <b-form-select :options="delay_unit_opts" v-model='row.item.delay_unit' v-on:change="edited = true;" class="ml-2"/>
                             </div>
-                            <div v-if="row.item.cmd_type === 'RandomMove'" class="d-flex justify-content-center">
+                            <div v-else-if="row.item.cmd_type === 'RandomMove'" class="d-flex justify-content-center">
                                 <div class="row rmove-opts">
                                     <div class="col">
                                         Button
@@ -129,7 +129,7 @@
 
                     <div class="row">
                         <div class="col-sm-6 my-5">
-                            <div v-if="this.commands.length == 0" style="display: inline-block; margin: 0px 10px 0px 10px;">
+                            <div v-if="this.commands.length === 0" style="display: inline-block; margin: 0px 10px 0px 10px;">
                                 <b-button variant="outline-primary" @click="crud(CRUD_E.APPEND, null)" style="display: inline-block;">Add Command</b-button>
                             </div>
                             <div v-if="edited" style="display: inline-block;">
