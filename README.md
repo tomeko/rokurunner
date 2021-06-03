@@ -37,6 +37,8 @@ Then run
     
 This will start RokuRunner server on port 8900. 
 
+*Tested on Windows 10 (Miniconda) and Ubuntu 18.04... Other deployment options in the todo list*
+
 ## Usage
 
 Visit http://localhost:8900 which presents you with the main interface.
