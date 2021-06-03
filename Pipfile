@@ -10,7 +10,6 @@ Flask-SQLAlchemy = "*"
 Flask-Migrate = "*"
 Flask-Executor = "*"
 requests = "*"
-roku = "*"
 
 [scripts]
 rokurunner = "python rokurunner.py"

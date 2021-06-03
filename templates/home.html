@@ -68,14 +68,19 @@
                             <div v-if="!row.item.editing">
                                 [[ row.item.name ]]
                             </div>
-                            <b-form-input v-model="row.item.name" v-if="row.item.editing" style="text-align: center;"
-                                v-on:change="rokudevs_edited = true;" />
+                            <div v-else>
+                                <b-form-input v-model="row.item.name"  style="text-align: center;" v-on:change="rokudevs_edited = true;" />
+                            </div>
+                            
                         </template>
                         <template v-slot:cell(ip)="row">
                             <div v-if="!row.item.editing">
                                 [[ row.item.ip ]]
                             </div>
-                            <b-form-input v-model="row.item.ip" v-if="row.item.editing" style="text-align: center;" v-on:change="rokudevs_edited = true;" />
+                            <div v-else>
+                                <b-form-input v-model="row.item.ip" style="text-align: center;" v-on:change="rokudevs_edited = true;" />
+                            </div>
+                            
 
                         </template>
                         <template v-slot:cell(edit_rdev)="row">
@@ -135,7 +140,10 @@
                                 <div v-if="!row.item.editing">
                                     [[ row.item.name ]]
                                 </div>
-                                <b-form-input v-if="row.item.editing" v-model="row.item.name"  style="text-align: center;" v-on:change="runners_edited = true;" />    
+                                <div v-else>
+                                    <b-form-input  v-model="row.item.name"  style="text-align: center;" v-on:change="runners_edited=true;" />    
+                                </div>
+                                
                             </template>
                             <template v-slot:cell(edit_runner)="row">
                                 <div class="text-center">
@@ -169,15 +177,24 @@
                 <b-table hover responsive borderless :table-variant="primary" :striped="true" :items="endpoints" :fields="fields_endpoints">
                     <template v-slot:cell(name)="row">
                         <div v-if="!row.item.editing">[[ row.item.name ]]</div>
-                        <b-form-input v-if="row.item.editing" v-model="row.item.name"  style="text-align: center;" v-on:change="eps_edited = true;" />  
+                        <div v-else>
+                            <b-form-input v-model="row.item.name"  style="text-align: center;" v-on:change="eps_edited = true;" />  
+                        </div>
+                        
                     </template>
                     <template v-slot:cell(dev_id)="row">
                         <div v-if="!row.item.editing">[[ row.item.dev_name ]]</div>
-                        <b-form-select v-if="row.item.editing" :options="devices.map(({name})=>name)" v-on:changed="eps_edited = true;" v-model="row.item.dev_name"/>
+                        <div v-else>
+                            <b-form-select :options="devices.map(({name})=>name)" v-on:changed="eps_edited = true;" v-model="row.item.dev_name"/>
+                        </div>
+                        
                     </template>
                     <template v-slot:cell(runner_id)="row">
                         <div v-if="!row.item.editing">[[ row.item.runner_name ]]</div>
-                        <b-form-select v-if="row.item.editing" :options="runners.map(({name})=>name)" v-on:changed="eps_edited = true;" v-model="row.item.runner_name"/>
+                        <div v-else>
+                            <b-form-select  :options="runners.map(({name})=>name)" v-on:changed="eps_edited = true;" v-model="row.item.runner_name"/>
+                        </div>
+                        
                     </template>
                     <template v-slot:cell(ep)="row">
                         <div class="d-flex">
@@ -277,7 +294,7 @@
             {
                 this.searching = true;
                 fetch(`${window.location.origin}/roku_list`).then(response => response.json()).then(data => {
-                    console.log(data);
+                    console.log("find_rokus_resp: " + data);
                     this.found_rokus = [];
                     this.search_started = true;
                     for (var i in data)
@@ -285,10 +302,11 @@
                         console.log(data[i].usn);
                         var uuid = data[i].usn.match('uuid:roku:ecp:(.*)')[1];
                         var ip = data[i].ip.match('http[s]?:\/\/(.*):8060[\/]?')[1];
-                        var found = {"ip" : ip, "uuid" : uuid};
-                        found.canadd = !(this.devices.some(d => d.ip === ip));
+                        var found = {"ip" : ip, "uuid" : uuid, "editing" : true};
+                        found.canadd = !(this.devices.some(d => d.ip == ip));
+                        console.log(found.canadd);
+                        console.log("editiggg: " + found.editing);
                         this.found_rokus.push(found);
-                        console.log(`found: ${found.ip} canadd: ${found.canadd}`);
                         this.searching = false;
                     }
                     
@@ -402,7 +420,7 @@
                 { 
                     if (data.status == "OK")
                         this.rokudevs_edited = false;
-                    else console.log(data.status);
+                    else console.log("savedevs_resp" + data.status);
                 });
             },
             save_runners()
@@ -430,7 +448,7 @@
                         location.reload();
                     }
                         
-                    else console.log(data);
+                    else console.log("save_runners_resp: " + data);
                 });
 
             },
@@ -455,7 +473,7 @@
                 { 
                     if (data.status == "OK")
                         this.eps_edited = false;
-                    else console.log(data);
+                    else console.log("save_eps_resp" + data);
                 });
 
             },
