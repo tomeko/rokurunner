@@ -111,8 +111,8 @@ curr_runner = None
 
 # execute runner
 def exec_runner(dev, runner):
+    global curr_runner
     try:
-        global curr_runner
         print(f'Started runner: {curr_runner}')
         for cmd in runner:
             if cmd.cmd_type != CommandTypes.Delay.name:
@@ -141,6 +141,7 @@ def exec_runner(dev, runner):
         print(f'Finish runner: {curr_runner}')
         curr_runner = None
     except Exception as ex:
+        curr_runner = None
         print(str(ex))
 
 # execute runner route
