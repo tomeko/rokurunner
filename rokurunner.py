@@ -151,7 +151,7 @@ def exec():
     dev = RokuDevice.query.filter_by(id=request.args.get("dev_id")).first()
     global curr_runner
     
-    if not curr_runner:
+    if curr_runner is None:
         curr_runner = runner.name
         msg = f"Running {curr_runner}..."
         executor.submit(exec_runner, dev, runner.cmds)
