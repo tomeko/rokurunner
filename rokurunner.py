@@ -137,7 +137,7 @@ def exec_runner(dev, runner):
                         sleep(delay)
                         
             elif cmd.cmd_type == CommandTypes.HttpRequest.name:
-                s.post(cmd.arg)
+                s.post(cmd.val)
             elif cmd.cmd_type == CommandTypes.CharLiteral.name:
                 url = f'http://{dev.ip}:8060/keypress/Lit_{quote_plus(cmd.val[0])}'
                 r = s.post(url)
