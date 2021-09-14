@@ -49,13 +49,14 @@ class ButtonPressCommands(IntEnum):
     VolumeMute = 16
     VolumeUp = 17
     PowerOff = 18
-    InputTuner = 19
-    InputHDMI1 = 20
-    InputHDMI2 = 21
-    InputHDMI3 = 22
-    InputHDMI4 = 23
-    InputAV1 = 24
-    Lit = 25
+    Power = 19
+    InputTuner = 20
+    InputHDMI1 = 21
+    InputHDMI2 = 22
+    InputHDMI3 = 23
+    InputHDMI4 = 24
+    InputAV1 = 25
+    Lit = 26
 
 class RokuDevice(db.Model):
     __tablename__ = "rokudevice"
